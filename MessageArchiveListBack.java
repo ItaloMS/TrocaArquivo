@@ -8,35 +8,23 @@
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+
+import net.sf.json.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 
 public class MessageArchiveListBack {
 
     private String protocol;
-    private String command;
     private String status;
-    private ArrayList<String> back;
-    private ArrayList<String> folder;
-    private ArrayList<String> file;
-    private String sender;
     private String receptor;
-
-    public MessageArchiveListBack(String protocol, String command, String status, ArrayList<String> back, ArrayList<String> folder, ArrayList<String> file, String sender, String receptor) {
-        this.protocol = protocol;
-        this.command = command;
-        this.status = status;
-        this.back = back;
-        this.folder = folder;
-        this.file = file;
-        this.sender = sender;
-        this.receptor = receptor;
-    }
-    
-    public MessageArchiveListBack(){
-        // para possibilitar inicializar sem os parâmetros
-    }
+    private String command;
+    private ArrayList<JSONArray> back;
+    private String sender;
 
     public String getProtocol() {
         return protocol;
@@ -44,14 +32,6 @@ public class MessageArchiveListBack {
 
     public void setProtocol(String protocol) {
         this.protocol = protocol;
-    }
-
-    public String getCommand() {
-        return command;
-    }
-
-    public void setCommand(String command) {
-        this.command = command;
     }
 
     public String getStatus() {
@@ -62,28 +42,28 @@ public class MessageArchiveListBack {
         this.status = status;
     }
 
-    public ArrayList<String> getBack() {
+    public String getReceptor() {
+        return receptor;
+    }
+
+    public void setReceptor(String receptor) {
+        this.receptor = receptor;
+    }
+
+    public String getCommand() {
+        return command;
+    }
+
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
+    public ArrayList<JSONArray> getBack() {
         return back;
     }
 
-    public void setBack(ArrayList<String> back) {
+    public void setBack(ArrayList<JSONArray> back) {
         this.back = back;
-    }
-
-    public ArrayList<String> getFolder() {
-        return folder;
-    }
-
-    public void setFolder(ArrayList<String> folder) {
-        this.folder = folder;
-    }
-
-    public ArrayList<String> getFile() {
-        return file;
-    }
-
-    public void setFile(ArrayList<String> file) {
-        this.file = file;
     }
 
     public String getSender() {
@@ -94,41 +74,48 @@ public class MessageArchiveListBack {
         this.sender = sender;
     }
 
-    public String getReceptor() {
-        return receptor;
-    }
-
-    public void setReceptor(String receptor) {
+    public MessageArchiveListBack(){}
+    
+    public MessageArchiveListBack(String protocol, String status, String receptor, String command, ArrayList<JSONArray> back, String sender) {
+        this.protocol = protocol;
+        this.status = status;
         this.receptor = receptor;
+        this.command = command;
+        this.back = back;
+        this.sender = sender;
     }
+    
 
-    public String jsonToStringArchiveListBack(Object p) {
+
+    public String jsonToStringArquivoVolta(Object p) {
         MessageArchiveListBack aux = (MessageArchiveListBack) p;
         Map objOrdered = new LinkedHashMap();
         objOrdered.put("protocol", aux.getProtocol());
-        objOrdered.put("command", aux.getCommand());
         objOrdered.put("status", aux.getStatus());
-        objOrdered.put("back", aux.getBack());
-        objOrdered.put("folder", aux.getFolder());
-        objOrdered.put("file", aux.getFile());
-        objOrdered.put("sender", aux.getSender());
         objOrdered.put("receptor", aux.getReceptor());
+        objOrdered.put("command", aux.getCommand());
+        objOrdered.put("back", aux.getBack());
+        objOrdered.put("sender", aux.getSender());
         String jsonText = JSONValue.toJSONString(objOrdered);
         return jsonText;
     }
 
-    public MessageArchiveListBack stringToObjecArchiveListBack(String p) throws org.json.simple.parser.ParseException {
+    public MessageArchiveListBack stringToObjecArquivoVolta(String p) throws ParseException {
+        
+        
         JSONParser parser = new JSONParser();
         Object obj = parser.parse(p);
+       
         JSONObject jsonObject = (JSONObject) obj;
+
         MessageArchiveListBack aux = new MessageArchiveListBack((String) jsonObject.get("protocol"),
-                                                                (String) jsonObject.get("command"),
-                                                                (String) jsonObject.get("status"),
-                                                                (ArrayList<String>) jsonObject.get("back"),
-                                                                (ArrayList<String>) jsonObject.get("folder"),
-                                                                (ArrayList<String>) jsonObject.get("file"),
-                                                                (String) jsonObject.get("sender"), 
-                                                                (String) jsonObject.get("receptor"));
+                (String) jsonObject.get("status"),
+                (String) jsonObject.get("receptor"),
+                (String) jsonObject.get("command"),
+                (ArrayList<JSONArray>) jsonObject.get("back"),
+                (String) jsonObject.get("sender"));
+               
         return aux;
     }
+   
 }
