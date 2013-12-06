@@ -8,15 +8,12 @@
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
-import java.util.Scanner;
 import org.json.simple.parser.ParseException;
 
 public class Client {
@@ -47,6 +44,7 @@ public class Client {
 
             }
         }
+        clientIp = meuIp;
         return meuIp;
 
     }
@@ -88,7 +86,18 @@ public class Client {
 
         String msgString;
         // cria json da mensagem pong
-        CommonMessage5ParamStatus msgJson = new CommonMessage5ParamStatus("pcmj", "pong", "100", serverIp, ipAdress);
+        CommonMessage5ParamStatus msgJson = new CommonMessage5ParamStatus("pcmj", "pong", "100", getIpClient(), ipAdress);
+        msgString = msgJson.jsonToString5ParamStatus(msgJson);
+        return msgString;
+
+    }
+    
+    // cria a mensagem de authenticate-back
+    public static String authenticateBack(String ipAdress) throws UnknownHostException, ParseException, IOException {
+
+        String msgString;
+        // cria json da mensagem authenticate-back
+        CommonMessage5ParamStatus msgJson = new CommonMessage5ParamStatus("pcmj", "authenticate-back", "200", getIpClient(), ipAdress);
         msgString = msgJson.jsonToString5ParamStatus(msgJson);
         return msgString;
 
@@ -117,8 +126,6 @@ public class Client {
         String temp;
         CommonMessage5ParamStatus msg5ParamStatus = new CommonMessage5ParamStatus();
         CommonMessage5ParamStatus msg5ParamStatusLocal = new CommonMessage5ParamStatus();
-        MessageAuthenticate msgAuthenticate = new MessageAuthenticate();
-        MessageAuthenticate msgAuthenticateLocal = new MessageAuthenticate();
         MessageAgentListBack msgAgentListBack = new MessageAgentListBack();
         MessageAgentListBack msgAgentListBackLocal = new MessageAgentListBack();
 
@@ -127,10 +134,10 @@ public class Client {
             // cria socket para comunicação
             Socket socketServer0 = new Socket(serverIp, 9876);
             /*  Socket socketToServer = new Socket();   
-             // timeout para operacoes no socket
-             socketToServer.connect(new InetSocketAddress(Server.getIpServer(),9876),timeout);
-             // timeout para leituras no socket
-             socketToServer.setSoTimeout(timeout); */
+            // timeout para operacoes no socket
+            socketToServer.connect(new InetSocketAddress(Server.getIpServer(),9876),timeout);
+            // timeout para leituras no socket
+            socketToServer.setSoTimeout(timeout); */
 
             // cria mensagem de ping
             msgOut = ping(serverIp);
@@ -141,6 +148,7 @@ public class Client {
             // transforma para o formato json a mensagem
             msg5ParamStatusLocal = msg5ParamStatus.stringToObjec5ParamStatus(msgIn);
 
+            // aguarda 200ms para buscar a resposta do ping no socket. Caso não seja pong, acusa timeout.
             Thread.sleep(200);
 
             // testa se a mensagem de retorno é um pong
@@ -238,11 +246,8 @@ public class Client {
         String temp;
         CommonMessage5ParamStatus msg5ParamStatus = new CommonMessage5ParamStatus();
         CommonMessage5ParamStatus msg5ParamStatusLocal = new CommonMessage5ParamStatus();
-        MessageAuthenticate msgAuthenticate = new MessageAuthenticate();
-        MessageAuthenticate msgAuthenticateLocal = new MessageAuthenticate();
-        MessageAgentListBack msgAgentListBack = new MessageAgentListBack();
-        MessageAgentListBack msgAgentListBackLocal = new MessageAgentListBack();
-        // MessageArchiveList msgArchiveList = new Messa
+        MessageArchiveListBack msgArchiveListBack = new MessageArchiveListBack();
+        MessageArchiveListBack msgArchiveListBackLocal = new MessageArchiveListBack();
 
         try {
 
@@ -290,7 +295,6 @@ public class Client {
                 // testa se a mensagem de retorno do peer é authenticate-back
                 while ((msg5ParamStatusLocal.getProtocol().equals("pcmj") && msg5ParamStatusLocal.getCommand().equals("authenticate-back"))) {
                     // fica trancado esperando o authenticate-back retornar
-                    //  && msg5ParamStatusLocal.getStatus().equals("200")
                     if (msg5ParamStatusLocal.getStatus().equals("203")) {
                         System.out.println("\nSenha incorreta. Acesso negado.\n");
                         System.exit(1);
@@ -305,7 +309,7 @@ public class Client {
                 System.out.println("-> Cliente autenticado no peer de IP " + (i+1) + ".");
                 
                 
-                socketToPeer1.close();
+                socketToPeer1.close(); 
 
                 Socket socketToPeer2 = new Socket(peers.get(i), 9876);
 
@@ -314,35 +318,28 @@ public class Client {
                 // envia a mensagem de archive-list
                 localMsg.sendMsg(socketToPeer2, msgOut);
                 // recebe o archive-list-back do peer
-                msgIn = localMsg.receiveMsg(socketToPeer2);
+                msgIn = localMsg.receiveMsg(socketToPeer2); 
                 // transforma para o formato json a mensagem
-
-                msgAgentListBackLocal = msgAgentListBack.stringToObjecAgentListBack(msgIn);
+                msgArchiveListBackLocal = msgArchiveListBack.stringToObjecArchiveListBack(msgIn);
                 
                 System.out.println("\nEnviado: " + msgOut);
                 System.out.println("Recebido: " + msgIn);
                 
                 // testa se a mensagem de retorno é agent-list-back
-                while (!(msgAgentListBackLocal.getProtocol().equals("pcmj") && msgAgentListBackLocal.getCommand().equals("archive-list-back") && msgAgentListBackLocal.getStatus().equals("200"))) {
+                while (!(msgArchiveListBackLocal.getProtocol().equals("pcmj") && msgArchiveListBackLocal.getCommand().equals("archive-list-back") && msgArchiveListBackLocal.getStatus().equals("200"))) {
                     // fica trancado esperando o agent-list-back retornar
                 }
                 
-                //for (i = 0; i < msgAgentListBackLocal.getBack().size(); i++){
-                    System.out.println("-> Arquivos: " + msgAgentListBackLocal.getBack().get(0));
-                // }
-
-                socketToPeer2.close(); /*
+                System.out.println("-> Arquivos do IP " + (i+1) + ":");
                 
-                 // recebeu o agent-list-back
-                 // adiciona os arquivos de cada ip na lista de arquivos do cliente
-                 for (i = 0; i < msgAgentListBackLocal.getBack().size(); i++) {
-                 temp = msgAgentListBackLocal.getBack().get(i);
-                 files.add(temp);
-                 }
+                for (i = 0; i < msgArchiveListBackLocal.getBack().size(); i++){
+                    System.out.println("    - " + (i+1) + ": " + msgArchiveListBackLocal.getBack().get(i));
+                }
 
-                 socketToPeer.close(); */
+                socketToPeer2.close();
 
             }
+            
         } catch (UnknownHostException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -355,7 +352,7 @@ public class Client {
 
     // método que baixa um arquivo de um ip
     public static void downloadAFile() {
-
+        // método não implementado.
     }
 
     // método que mantém o cliente online para disponibilizar arquivos para outros peers
@@ -365,26 +362,18 @@ public class Client {
         Message localMsg = new Message();
         String msgIn;
         String msgOut;
-        String temp;
-        CommonMessage5ParamStatus msg5ParamStatus = new CommonMessage5ParamStatus();
-        CommonMessage5ParamStatus msg5ParamStatusLocal = new CommonMessage5ParamStatus();
-        MessageAuthenticate msgAuthenticate = new MessageAuthenticate();
-        MessageAuthenticate msgAuthenticateLocal = new MessageAuthenticate();
-        MessageAgentListBack msgAgentListBack = new MessageAgentListBack();
-        MessageAgentListBack msgAgentListBackLocal = new MessageAgentListBack();
         CommonMessage4Parameters msg4param = new CommonMessage4Parameters();
         CommonMessage4Parameters msg4ParamLocal = new CommonMessage4Parameters();
-        String local;
 
         // cria socket do peer como servidor na porta 9876
         ServerSocket socket = new ServerSocket(9876);
 
         try {
 
-            Socket SocketPeerConnection = socket.accept();
+            Socket socketPeerConnection0 = socket.accept();
 
             // lê o que está no socket e transforma para json
-            msgIn = localMsg.receiveMsg(SocketPeerConnection);
+            msgIn = localMsg.receiveMsg(socketPeerConnection0);
             msg4ParamLocal = msg4param.stringToObjec4Param(msgIn);
 
             // testa se a mensagem é um ping de outro peer                
@@ -395,9 +384,34 @@ public class Client {
                 // cria a mensagem pong
                 msgOut = pong(senderIp);
                 // envia o pong para o cliente
-                localMsg.sendMsg(SocketPeerConnection, msgOut);
+                localMsg.sendMsg(socketPeerConnection0, msgOut);
 
             }
+            
+            socketPeerConnection0.close();
+            
+            Socket socketPeerConnection1 = socket.accept();
+            
+            // lê o que está no socket e transforma para json
+            msgIn = localMsg.receiveMsg(socketPeerConnection1);
+            msg4ParamLocal = msg4param.stringToObjec4Param(msgIn);
+
+            // testa se a mensagem é um ping de outro peer                
+            if (msg4ParamLocal.getProtocol().equals("pcmj") && msg4ParamLocal.getCommand().equals("authenticate")) {
+
+                // lê o ip de quem enviou a mensagem
+                String senderIp = msg4ParamLocal.getSender();
+                // cria a mensagem pong
+                msgOut = authenticateBack(senderIp);
+                // envia o pong para o cliente
+                localMsg.sendMsg(socketPeerConnection1, msgOut);
+
+            }
+            
+            socketPeerConnection1.close();
+            
+            // archive-list-back e archive-request-back não foram implementados.
+            
 
         } catch (UnknownHostException e) {
             // TODO Auto-generated catch block
@@ -410,34 +424,32 @@ public class Client {
     }
 
     public static void main(String[] args) throws Exception {
-        // talkWithServer();
 
-        Scanner choice = new Scanner(System.in);
-        int numberChoice;
+        /* 
+         * cria e executa todo o automato descrito pelo protocolo junto ao servidor
+         * ao executar essa etapa, recebe a lista de ips que estão conectados ao
+         * servidor.
+        */
         talkWithServer();
+        
+        /* 
+         * cria e executa todo o automato descrito pelo protocolo junto ao peer
+         * ao executar essa etapa, recebe a lista de arquivos disponíveis por todos
+         * os peers conectados ao servidor.
+        */
         talkWithPeers();
-        /* System.out.println("Escolha uma opção digitando o valor correspondente:\n");
-         System.out.println("1. Baixar um arquivo\n");
-         System.out.println("2. Baixar lista de arquivos dos peers\n");
-         System.out.println("3. Atualizar lista de peers e arquivos\n");
-         System.out.println("4. Ficar disponível para envio de arquivos\n");
-         System.out.println("5. Sair\n");
-         numberChoice = choice.nextInt();
-         if (numberChoice == 1) {
-         downloadAFile();
-         } else if (numberChoice == 2) {
-         talkWithPeers();
-         } else if (numberChoice == 3) {
-         talkWithServer();
-         talkWithPeers();
-         } else if (numberChoice == 4) {
-         beAPeer();
-         } else if (numberChoice == 5) {
-         System.exit(0);
-         } else if (numberChoice < 1 || numberChoice > 5) {
-         System.out.println("Erro: opção inválida. O programa será abortado.");
-         System.exit(1); 
-         } */
+        
+        /*
+         * método não implementado
+        */
+        // downloadAFile();
+        
+        /*
+         * fica disponível para os peers se comunicarem, fazendo ping e authenticate
+         * no cliente implementado aqui.
+        */
+        beAPeer();
+        
 
     }
 

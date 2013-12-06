@@ -9,14 +9,24 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-
+//essa lib do array nao tinhamos e eh importante pra funcionar
 import net.sf.json.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+/**
+ *
+ * @author italo
+ */
 
+// tem q substituir nossa MessageArchiveListBack
 public class MessageArchiveListBack {
 
     private String protocol;
@@ -87,7 +97,7 @@ public class MessageArchiveListBack {
     
 
 
-    public String jsonToStringArquivoVolta(Object p) {
+    public String jsonToStringArchiveListBack(Object p) {
         MessageArchiveListBack aux = (MessageArchiveListBack) p;
         Map objOrdered = new LinkedHashMap();
         objOrdered.put("protocol", aux.getProtocol());
@@ -100,7 +110,7 @@ public class MessageArchiveListBack {
         return jsonText;
     }
 
-    public MessageArchiveListBack stringToObjecArquivoVolta(String p) throws ParseException {
+    public MessageArchiveListBack stringToObjecArchiveListBack(String p) throws ParseException {
         
         
         JSONParser parser = new JSONParser();
